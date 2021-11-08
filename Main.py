@@ -1,29 +1,18 @@
-import pandas as pd
-import numpy as np
-from tslearn.preprocessing import TimeSeriesScalerMeanVariance
-from tslearn.clustering import TimeSeriesKMeans, silhouette_score
+import functions as fn
+import data as dt
 
 
-# Import data
-data_o = pd.read_excel('Data\\Archivo_1_Datos_TS.xlsx')
+# Importar datos
+data_o = dt.data_o
 
-# Drop rows with missing dates
+# Eliminar filas con fechas faltantes y rellenar datos faltantes
+data_c = fn.clean_data(data_o, 'Fecha')
 
-data_c = data_o.dropna(subset=['Fecha'])
-data_c.set_index('Fecha', inplace=True)
-data_c = data_c.fillna(method='ffill')
+# Obtener datos para el óptimo número de clusters
+silhouette = fn.optimum_clusters(data_c, 8)
 
-# Estandarize variables
-X_train = TimeSeriesScalerMeanVariance().fit_transform(data_c)
 
-# Initialize silhouette resultas
-silhouette = []
 
-# Get silhoutte for differente clusters
-for i in range(2,10):
-    model = TimeSeriesKMeans(n_clusters=i, metric="dtw", max_iter=10).fit(X_train)
-    labels = model.labels_
-    silhouette.append(silhouette_score(X_train, labels, metric="dtw") )
 
 # Build model with optimum number of clusters according to sihouette results
 model = TimeSeriesKMeans(n_clusters=3, metric="dtw", max_iter=10).fit(X_train)
