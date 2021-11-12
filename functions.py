@@ -46,7 +46,6 @@ def comportamiento_clusters(dict_clusters: dict):
     
 
     for i in range(len(dict_clusters)):
-        print('cluster_'+ str(i))
         cluster = dict_clusters['cluster_' + str(i)]
         cluster['datedif'] = cluster.index.to_series().diff().dt.days
         saltos = cluster[cluster['datedif']>1]

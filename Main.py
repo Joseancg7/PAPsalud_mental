@@ -1,4 +1,6 @@
 import functions as fn
+import warnings
+warnings.filterwarnings('ignore')
 import data as dt
 
 
