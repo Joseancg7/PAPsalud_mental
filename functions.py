@@ -46,6 +46,7 @@ def comportamiento_clusters(dict_clusters: dict):
     
 
     for i in range(len(dict_clusters)):
+
         cluster = dict_clusters['cluster_' + str(i)]
         cluster['datedif'] = cluster.index.to_series().diff().dt.days
         saltos = cluster[cluster['datedif']>1]
@@ -53,48 +54,56 @@ def comportamiento_clusters(dict_clusters: dict):
         
         index_pos = []
 
-        for i in indice_saltos:
-            index_pos.append(cluster.index.get_loc(i))
-
+        for j in indice_saltos:
+            index_pos.append(cluster.index.get_loc(j))
 
         cambios = []
 
+        if len(index_pos) == 0:
+            resta = (cluster.iloc[-1,0:-1] - cluster.iloc[0,0:-1]).to_list()
+
+            result = [1 if k>0 else -1 if k<0 else 0 for k in resta]
+
+            cambios.append(result)
+
+            cambios_df = pd.DataFrame(cambios, columns=cluster.columns.to_list()[0:-1])
+            summary_cambios = cambios_df.apply(pd.Series.value_counts)
+            dict_comportamiento['cluster_' + str(i)] = summary_cambios
+            
+
     # Intialize for
-        for i in range(len(index_pos)-1):
+        for j in range(len(index_pos)):
 
         # substract last minus first to get change in variables
-            resta = (cluster.iloc[index_pos[i+1],0:-1] - cluster.iloc[index_pos[i],0:-1]).to_list()
+            resta = (cluster.iloc[index_pos[j],0:-1] - cluster.iloc[index_pos[j-1],0:-1]).to_list()
 
         # Assign change values according to 1, -1, 0
-            result = [1 if j>0 else -1 if j<0 else 0 for j in resta]
+            result = [1 if k>0 else -1 if k<0 else 0 for k in resta]
 
             cambios.append(result)
         
         # if the first time jump is not in the second position 
-            if index_pos[0] != 1 & i == 0:
-                resta = (cluster.iloc[0,0:-1] - cluster.iloc[index_pos[i],0:-1]).to_list()
+            if index_pos[0] != 1 & j == 0:
+                resta = (cluster.iloc[0,0:-1] - cluster.iloc[index_pos[j-1],0:-1]).to_list()
 
                 # Assign change values according to 1, -1, 0
-                result = [1 if j>0 else -1 if j<0 else 0 for j in resta]
+                result = [1 if k>0 else -1 if k<0 else 0 for k in resta]
 
                 cambios.append(result)
 
             # if the last position is not the end of the dataframe
-            if index_pos[-1] != len(cluster) & i == len(index_pos)-2:
+            if index_pos[-1] != len(cluster) & j == len(index_pos)-2:
 
-                resta = (cluster.iloc[index_pos[i+1],0:-1] - cluster.iloc[-1,0:-1]).to_list()
+                resta = (cluster.iloc[index_pos[j],0:-1] - cluster.iloc[-1,0:-1]).to_list()
 
                 # Assign change values according to 1, -1, 0
-                result = [1 if j>0 else -1 if j<0 else 0 for j in resta]
+                result = [1 if k>0 else -1 if k<0 else 0 for k in resta]
 
                 cambios.append(result)
 
         cambios_df = pd.DataFrame(cambios, columns=cluster.columns.to_list()[0:-1])
         summary_cambios = cambios_df.apply(pd.Series.value_counts)
         dict_comportamiento['cluster_' + str(i)] = summary_cambios
-
-
- 
 
     return dict_comportamiento
 
@@ -104,15 +113,46 @@ def graph_prep(df: pd.DataFrame, df_fechas: pd.DataFrame):
     df.Clusters = df.Clusters.astype(str)
     df_fechas['Fecha'] = pd.to_datetime(df_fechas['Fecha'], format="%d/%m/%Y")
 
+    lista_fechas = df_fechas['Fecha'].to_list()
+    lista_eventos = df_fechas['Evento'].to_list()
+
     columna_match = []
+    descripcion = []
 
     for i in range(len(df)):
-            if df.iloc[i].name in df_fechas['Fecha'].to_list():
+            if df.iloc[i].name in lista_fechas:
+                indice = lista_fechas.index(df.iloc[i].name)
                 columna_match.append('Fecha importante')
+                descripcion.append(lista_eventos[indice])
             else:
                 columna_match.append('-')
+                descripcion.append('-')
 
 
     df['Fecha_importante'] = columna_match
+    df['Evento'] = descripcion
+
+
+def caracterizacion_clusters(dict_compor: dict, per_min: float):
+
+    comportamiento_comun = {}
+
+    for i in list(dict_compor.keys()):
+
+        compor = dict_compor[i].drop('Clusters', axis=1)
+        crit_min = round(compor.sum(axis=0)[0]*per_min)
+        max_indice = compor.idxmax()
+        data = compor.max() >= crit_min
+        resultado = pd.DataFrame()
+        resultado['Variables'] = [data.index[i] for i in range(len(data)) if data[i]]
+        resultado['Dirección'] = [max_indice[i] for i in range(len(data)) if data[i]]
+        comportamiento_comun[i] = resultado
+
+    return comportamiento_comun
+
+def display_result(i: int, dict_comunes: dict):
+    print('Comportamiento común cluster' + str(i+1) +' 80%:')
+    display(dict_comunes['cluster_'+str(i)])
+
 
 
