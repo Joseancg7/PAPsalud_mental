@@ -91,7 +91,7 @@ def comportamiento_clusters(dict_clusters: dict):
 
         cambios_df = pd.DataFrame(cambios, columns=cluster.columns.to_list()[0:-1])
         summary_cambios = cambios_df.apply(pd.Series.value_counts)
-        dict_comportamiento['cluster' + str(i)] = summary_cambios
+        dict_comportamiento['cluster_' + str(i)] = summary_cambios
 
 
  
@@ -99,6 +99,20 @@ def comportamiento_clusters(dict_clusters: dict):
     return dict_comportamiento
 
 
+def graph_prep(df: pd.DataFrame, df_fechas: pd.DataFrame):
 
+    df.Clusters = df.Clusters.astype(str)
+    df_fechas['Fecha'] = pd.to_datetime(df_fechas['Fecha'], format="%d/%m/%Y")
+
+    columna_match = []
+
+    for i in range(len(df)):
+            if df.iloc[i].name in df_fechas['Fecha'].to_list():
+                columna_match.append('Fecha importante')
+            else:
+                columna_match.append('-')
+
+
+    df['Fecha_importante'] = columna_match
 
 

@@ -19,5 +19,10 @@ separate_clusters = fn.clusters(data_c, num_c[0])
 # Caracterización del cportamiento de cada cluster
 comportamiento = fn.comportamiento_clusters(separate_clusters)
 
+# Preparación para gráfica
+fn.graph_prep(data_c, dt.fechas)
+
+
+
 
 
